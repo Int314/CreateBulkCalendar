@@ -1,3 +1,17 @@
 # Googleカレンダーに予定を一括登録するスプレッドシート
 
-https://docs.google.com/spreadsheets/d/1vkUMSiuVwfQq7lvCViBC1xadj4CmS5OThHZ5wZScPP4/edit#gid=0
+## 機能
+- Googleカレンダーに予定を一括で操作する
+  - 登録・更新・削除が使用できる
+- カレンダーは選択できる
+  - デフォルトは自分のカレンダー
+  - 他に共有カレンダーを選択できる
+
+## 登録できる項目
+- 日付
+- タイトル
+- 開始時間
+- 終了時間
+- 終日
+- カレンダー名
+- 説明（予定の詳細）
