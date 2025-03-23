@@ -1,5 +1,5 @@
 const RANGE_START_COL = 'A';     // データ範囲の開始列
-const RANGE_END_COL = 'I';       // データ範囲の終了列
+const RANGE_END_COL = 'K';       // データ範囲の終了列
 const START_ROW_NUM = 6;         // データ開始行番号
 
 const IDX_COL_ACTION = 0;        // 処理区分列
@@ -9,9 +9,10 @@ const IDX_COL_START_TIME = 3;    // 開始時間列
 const IDX_COL_END_TIME = 4;      // 終了時間列
 const IDX_COL_ALL_DAY = 5;       // 終日列
 const IDX_COL_CALENDAR_NAME = 6; // カレンダー名列
-const IDX_COL_DESCRIPTION = 7;   // 説明列
-const IDX_COL_RESULT = 8;        // 処理結果列
-const IDX_COL_EVENT_ID = 9;      // イベントID列
+const IDX_COL_PLACE = 7;         // 場所列
+const IDX_COL_DESCRIPTION = 8;   // 説明列
+const IDX_COL_RESULT = 9;        // 処理結果列
+const IDX_COL_EVENT_ID = 10;     // イベントID列
 
 const DEFAULT_ACTION_NAME = '処理しない';   // 処理区分の初期値
 const DEFAULT_CALENDAR_NAME = 'デフォルト'; // カレンダー名の初期値
@@ -49,6 +50,7 @@ function createCalendar() {
 
       const originalDescription = row[IDX_COL_DESCRIPTION];
       const description = createDescription(originalDescription);
+      const place = row[IDX_COL_PLACE];
 
       const eventId = row[IDX_COL_EVENT_ID];
       let event = eventId ? calendar.getEventById(eventId) : null;
@@ -87,18 +89,27 @@ function createCalendar() {
             } else {
               event.setTime(startDate, endDate);
             }
+            if (place) {
+              event.setLocation(place);
+            }
             result = '更新されました';
           } else {
             // 予定を新規作成
             if (isAllDay) {
-              event = calendar.createAllDayEvent(title, date, { description: description });
- 
+              event = calendar.createAllDayEvent(title, date, {
+                description: description,
+                location: place
+              });
+
               // 前日の9時に通知設定（1440分（1日）- 540分（9時間））
               event.removeAllReminders();
               event.addPopupReminder(1440 - 540);
             } else {
-              event = calendar.createEvent(title, startDate, endDate, { description: description });
-            }  
+              event = calendar.createEvent(title, startDate, endDate, {
+                description: description,
+                location: place
+              });
+            }
             // イベントIDを保存
             sheet.getRange(i + START_ROW_NUM, IDX_COL_EVENT_ID + 1).setValue(event.getId());
             result = '新規作成されました';
