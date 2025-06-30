@@ -190,13 +190,6 @@ function createDescription(originalDescription) {
     `スプレッドシートリンク: ${spreadsheetUrl}`;
 }
 
-function addDefaultReminder(event) {
-  const reminders = CalendarApp.getDefaultCalendar().getEventReminders(event.getId());
-  if (reminders.length === 0) {
-    event.addPopupReminder(120); // 通知をイベントの60分前に設定
-  }
-}
-
 /**
  * データ初期化
  */
