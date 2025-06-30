@@ -1,0 +1,21 @@
+# clasp設定ファイル（個人固有の情報のため除外）
+.clasp.json
+
+# Node.js関連
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Google Apps Script認証情報
+.clasprc.json
+
+# macOS関連
+.DS_Store
+
+# IDEファイル
+.vscode/
+.idea/
+
+# ログファイル
+*.log
