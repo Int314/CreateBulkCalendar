@@ -1,10 +1,10 @@
 # CreateBulkCalendar
 
-Googleカレンダーに予定を一括登録するためのGoogle Apps Scriptプロジェクトです。
+Google カレンダーに予定を一括登録するための Google Apps Script プロジェクトです。
 
 ## 機能
 
-- スプレッドシートから予定を一括でGoogleカレンダーに登録
+- スプレッドシートから予定を一括で Google カレンダーに登録
 - 予定の更新・削除も可能
 - 複数のカレンダーに対応
 - 終日予定の設定が可能
@@ -13,49 +13,53 @@ Googleカレンダーに予定を一括登録するためのGoogle Apps Script�
 ## セットアップ方法
 
 1. このリポジトリをクローン
+
 ```bash
 git clone https://github.com/yourusername/CreateBulkCalendar.git
 cd CreateBulkCalendar
 ```
 
-2. claspのインストール
+2. clasp のインストール
+
 ```bash
 npm install -g @google/clasp
 ```
 
-3. Googleアカウントでログイン
+3. Google アカウントでログイン
+
 ```bash
 clasp login
 ```
 
-4. プロジェクトの作成とデプロイ
+4. プロジェクトの作成
+
 ```bash
-# プロジェクトの作成
-clasp create --title "CreateBulkCalendar" --rootDir ./src
+clasp create --title "CreateBulkCalendar"
+```
 
-# コードのプッシュ
+5. コードのプッシュ
+
+```bash
 clasp push
-
-# デプロイ
-clasp deploy
 ```
 
 ## スプレッドシートの設定
 
-1. 新しいGoogleスプレッドシートを作成
+1. 新しい Google スプレッドシートを作成
 2. スクリプトエディタを開き（ツール > スクリプトエディタ）、このプロジェクトのコードをコピー＆ペースト
 3. スプレッドシートに以下の列を設定：
-   - A列: 処理区分（「登録・更新」または「削除」）
-   - B列: 日付
-   - C列: タイトル
-   - D列: 開始時間
-   - E列: 終了時間
-   - F列: 終日（チェックボックス）
-   - G列: カレンダー名
-   - H列: 場所
-   - I列: 説明
-   - J列: 処理結果
-   - K列: イベントID
+   - A 列: 処理区分（「登録・更新」または「削除」）
+   - B 列: タイトル
+   - C 列: 開始日
+   - D 列: 開始時間
+   - E 列: 終了日
+   - F 列: 終了時間
+   - G 列: 終日（チェックボックス）
+   - H 列: カレンダー名
+   - I 列: 場所
+   - J 列: 説明（予定の詳細）
+   - K 列: 処理結果
+   - L 列: イベント ID（非表示／スクリプト用）
 
 ## 使い方
 
@@ -66,33 +70,34 @@ clasp deploy
 
 ## 開発方法
 
-1. ローカルでの開発
+### コードの取得・反映
+
+Apps Script 側の変更をローカルに反映、またはローカルの変更を Apps Script に反映します。
+
 ```bash
-# コードのプル
-clasp pull
+clasp pull   # Apps Script 側の変更をローカルに反映
+clasp push   # ローカルの変更をApps Scriptに反映
+```
 
-# コードのプッシュ
-clasp push
+### スクリプトエディタをブラウザで開く
 
-# デプロイ
+```bash
+clasp open-script
+```
+
+### デプロイ
+
+```bash
 clasp deploy
 ```
 
-2. バージョン管理
+### バージョン管理
+
 ```bash
-# 新しいバージョンの作成
-clasp version "バージョン説明"
-
-# バージョン一覧の表示
-clasp versions
+clasp version "バージョン説明"   # 新しいバージョンの作成
+clasp versions                   # バージョン一覧の表示
 ```
-
-## 注意事項
-
-- GoogleカレンダーAPIの利用には、適切な権限の設定が必要です
-- スプレッドシートの共有設定に注意してください
-- 大量の予定を一度に登録する場合は、実行時間の制限に注意してください
 
 ## ライセンス
 
-MIT License 
+MIT License
