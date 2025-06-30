@@ -49,6 +49,12 @@ function createCalendar() {
       const endTime = row[IDX_COL_END_TIME];
       const isAllDay = row[IDX_COL_ALL_DAY];
 
+      // 開始日と終了日の妥当性チェック
+      if (endDate < startDate) {
+        sheet.getRange(i + START_ROW_NUM, IDX_COL_RESULT + 1).setValue('エラー: 終了日が開始日より前です');
+        continue;
+      }
+
       const originalDescription = row[IDX_COL_DESCRIPTION];
       const description = createDescription(originalDescription);
       const place = row[IDX_COL_PLACE];
@@ -149,10 +155,10 @@ function createCalendar() {
       // 処理列を初期化
       sheet.getRange(i + START_ROW_NUM, IDX_COL_ACTION + 1).setValue(DEFAULT_ACTION_NAME);
     }
-    SpreadsheetApp.getActiveSpreadsheet().toast('完了しました。', '完了', 5);
+    SpreadsheetApp.getUi().alert('処理が完了しました。\n' + '処理結果列を確認してください。');
   } catch (e) {
     Logger.log(e);
-    SpreadsheetApp.getActiveSpreadsheet().toast('エラーが発生しました。', 'エラー', 5);
+    SpreadsheetApp.getUi().alert('エラーが発生しました。\n' + e);
   }
 }
 
@@ -218,10 +224,10 @@ function resetData() {
     const allDayRange = sheet.getRange(START_ROW_NUM, IDX_COL_ALL_DAY + 1, lastRow - START_ROW_NUM + 1);
     allDayRange.insertCheckboxes();
 
-    SpreadsheetApp.getActiveSpreadsheet().toast('データが初期化されました。', '完了', 5);
+    SpreadsheetApp.getUi().alert('データが初期化されました。');
   } catch (e) {
     Logger.log(e);
-    SpreadsheetApp.getActiveSpreadsheet().toast('エラーが発生しました。', 'エラー', 5);
+    SpreadsheetApp.getUi().alert('エラーが発生しました。\n' + e);
   }
 }
 
