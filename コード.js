@@ -29,32 +29,29 @@ const DEFAULT = {
  */
 function createCalendar() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-
-  // データ取得
-  const dataRange = `${RANGE.START_COL}${RANGE.START_ROW_NUM}:${RANGE.END_COL}`; // A1形式
+  const dataRange = `${RANGE.START_COL}${RANGE.START_ROW_NUM}:${RANGE.END_COL}`;
   const data = sheet.getRange(dataRange).getValues();
 
   try {
     for (let i = 0; i < data.length; i++) {
       const rowObj = parseRow(data[i]);
+      const rowNum = i + RANGE.START_ROW_NUM;
 
+      // 無効な行の場合は処理しない
       if (!rowObj.action || rowObj.action === DEFAULT.ACTION_NAME) continue;
 
       const calendar = getCalendarByName(rowObj.calendarName);
       if (!calendar) {
-        setResultAndReset(sheet, i + RANGE.START_ROW_NUM, 'カレンダーが見つかりませんでした。');
+        setResultAndReset(sheet, rowNum, 'カレンダーが見つかりませんでした。');
         continue;
       }
 
       const startDate = rowObj.startDate;
       const endDate = rowObj.endDate ? rowObj.endDate : startDate;
-      const startTime = rowObj.startTime;
-      const endTime = rowObj.endTime;
-      const isAllDay = rowObj.isAllDay;
 
       // 開始日と終了日の妥当性チェック
       if (endDate < startDate) {
-        setResultAndReset(sheet, i + RANGE.START_ROW_NUM, 'エラー: 終了日が開始日より前です');
+        setResultAndReset(sheet, rowNum, 'エラー: 終了日が開始日より前です');
         continue;
       }
 
@@ -63,70 +60,41 @@ function createCalendar() {
       const eventId = rowObj.eventId;
       let event = eventId ? calendar.getEventById(eventId) : null;
 
-      let result = '';
-
+      // 削除処理
       if (rowObj.action === '削除') {
         if (event) {
           event.deleteEvent();
-          result = '削除されました';
+          setResultAndReset(sheet, rowNum, '削除されました', true);
         } else {
-          result = '削除するイベントが見つかりませんでした';
+          setResultAndReset(sheet, rowNum, '削除するイベントが見つかりませんでした', true);
         }
-
-        setResultAndReset(sheet, i + RANGE.START_ROW_NUM, result, true);
         continue;
       }
 
+      // 登録・更新処理
       if (rowObj.action === '登録・更新') {
         let startDateTime, endDateTime;
-        if (!isAllDay) {
-          startDateTime = buildDateTime(startDate, startTime);
-          endDateTime = buildDateTime(endDate, endTime);
+        if (!rowObj.isAllDay) {
+          startDateTime = buildDateTime(startDate, rowObj.startTime);
+          endDateTime = buildDateTime(endDate, rowObj.endTime);
         }
 
         if (event) {
-          // 予定を更新
           event.setTitle(rowObj.title);
           event.setDescription(description);
-          if (isAllDay) {
-            // 終日イベントの更新 - 複数日対応
-            if (startDate.getTime() === endDate.getTime()) {
-              // 単日の終日イベント
-              event.setAllDayDate(startDate);
-            } else {
-              // 複数日の終日イベント - 終了日の翌日を指定
-              const adjustedEndDate = new Date(endDate);
-              adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
-              event.setAllDayDates(startDate, adjustedEndDate);
-            }
+          if (rowObj.isAllDay) {
+            setOrCreateAllDayEvent(event, true, rowObj.title, startDate, endDate);
           } else {
-            // 時刻指定イベントの更新
             event.setTime(startDateTime, endDateTime);
           }
-          if (place) {
-            event.setLocation(place);
-          }
-          result = '更新されました';
+          if (place) event.setLocation(place);
+          setResultAndReset(sheet, rowNum, '更新されました');
         } else {
-          // 予定を新規作成
-          if (isAllDay) {
-            // 終日イベントの新規作成 - 複数日対応
-            if (startDate.getTime() === endDate.getTime()) {
-              // 単日の終日イベント
-              event = calendar.createAllDayEvent(rowObj.title, startDate, {
-                description: description,
-                location: place
-              });
-            } else {
-              // 複数日の終日イベント - 終了日の翌日を指定
-              const adjustedEndDate = new Date(endDate);
-              adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
-              event = calendar.createAllDayEvent(rowObj.title, startDate, adjustedEndDate, {
-                description: description,
-                location: place
-              });
-            }
-
+          if (rowObj.isAllDay) {
+            event = setOrCreateAllDayEvent(calendar, false, rowObj.title, startDate, endDate, {
+              description: description,
+              location: place
+            });
             // 前日の9時に通知設定（1440分（1日）- 540分（9時間））
             event.removeAllReminders();
             event.addPopupReminder(1440 - 540);
@@ -137,11 +105,9 @@ function createCalendar() {
               location: place
             });
           }
-          // イベントIDを保存
-          sheet.getRange(i + RANGE.START_ROW_NUM, COL.EVENT_ID + 1).setValue(event.getId());
-          result = '新規作成されました';
+          sheet.getRange(rowNum, COL.EVENT_ID + 1).setValue(event.getId());
+          setResultAndReset(sheet, rowNum, '新規作成されました');
         }
-        setResultAndReset(sheet, i + RANGE.START_ROW_NUM, result);
         continue;
       }
     }
@@ -253,6 +219,31 @@ function buildDateTime(date, time) {
   dt.setMinutes(time.getMinutes());
   dt.setSeconds(0);
   return dt;
+}
+
+/**
+ * 終日イベントのセット・作成（単日/複数日対応）
+ */
+function setOrCreateAllDayEvent(eventOrCalendar, isUpdate, title, startDate, endDate, options) {
+  if (startDate.getTime() === endDate.getTime()) {
+    // 単日の終日イベント
+    if (isUpdate) {
+      eventOrCalendar.setAllDayDate(startDate);
+      return eventOrCalendar;
+    } else {
+      return eventOrCalendar.createAllDayEvent(title, startDate, options);
+    }
+  } else {
+    // 複数日の終日イベント - 終了日の翌日を指定
+    const adjustedEndDate = new Date(endDate);
+    adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
+    if (isUpdate) {
+      eventOrCalendar.setAllDayDates(startDate, adjustedEndDate);
+      return eventOrCalendar;
+    } else {
+      return eventOrCalendar.createAllDayEvent(title, startDate, adjustedEndDate, options);
+    }
+  }
 }
 
 /**
