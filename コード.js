@@ -24,12 +24,17 @@ const DEFAULT = {
   CALENDAR_NAME: 'デフォルト', // カレンダー名の初期値
 };
 
+// 通知時間（分）: 前日の9時
+const MINUTES_IN_DAY = 1440;
+const MINUTES_AT_9AM = 540;
+const REMINDER_MINUTES_BEFORE = MINUTES_IN_DAY - MINUTES_AT_9AM; // 前日の9時
+
 /**
  * カレンダー作成
  */
 function createCalendar() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  const dataRange = `${RANGE.START_COL}${RANGE.START_ROW_NUM}:${RANGE.END_COL}`;
+  const dataRange = getA1Range(RANGE.START_COL, RANGE.START_ROW_NUM, RANGE.END_COL);
   const data = sheet.getRange(dataRange).getValues();
 
   try {
@@ -95,9 +100,9 @@ function createCalendar() {
               description: description,
               location: place
             });
-            // 前日の9時に通知設定（1440分（1日）- 540分（9時間））
+            // 前日の9時に通知設定
             event.removeAllReminders();
-            event.addPopupReminder(1440 - 540);
+            event.addPopupReminder(REMINDER_MINUTES_BEFORE);
           } else {
             // 時刻指定イベントの新規作成
             event = calendar.createEvent(rowObj.title, startDateTime, endDateTime, {
@@ -171,7 +176,7 @@ function createDescription(originalDescription) {
 function resetData() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   const lastRow = sheet.getLastRow();
-  const dataRange = `${RANGE.START_COL}${RANGE.START_ROW_NUM}:${RANGE.END_COL}${lastRow}`;
+  const dataRange = getA1Range(RANGE.START_COL, RANGE.START_ROW_NUM, RANGE.END_COL, lastRow); // ←関数化
 
   try {
     // データ範囲のセルをクリア
@@ -243,6 +248,22 @@ function setOrCreateAllDayEvent(eventOrCalendar, isUpdate, title, startDate, end
     } else {
       return eventOrCalendar.createAllDayEvent(title, startDate, adjustedEndDate, options);
     }
+  }
+}
+
+/**
+ * A1形式の範囲文字列を生成
+ * @param {string} startCol
+ * @param {number} startRow
+ * @param {string} endCol
+ * @param {number|string} [endRow] 省略時は列のみ
+ * @returns {string}
+ */
+function getA1Range(startCol, startRow, endCol, endRow) {
+  if (endRow !== undefined) {
+    return `${startCol}${startRow}:${endCol}${endRow}`;
+  } else {
+    return `${startCol}${startRow}:${endCol}`;
   }
 }
 
