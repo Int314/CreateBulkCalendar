@@ -30,24 +30,21 @@ function createCalendar() {
 
   try {
     for (let i = 0; i < data.length; i++) {
-      const row = data[i];
+      const rowObj = parseRow(data[i]);
 
-      const action = row[IDX_COL_ACTION];
-      if (!action || action === DEFAULT_ACTION_NAME) continue;
+      if (!rowObj.action || rowObj.action === DEFAULT_ACTION_NAME) continue;
 
-      const calendarName = row[IDX_COL_CALENDAR_NAME];
-      const calendar = getCalendarByName(calendarName);
+      const calendar = getCalendarByName(rowObj.calendarName);
       if (!calendar) {
         setResultAndReset(sheet, i + START_ROW_NUM, 'カレンダーが見つかりませんでした。');
         continue;
       }
 
-      const title = row[IDX_COL_TITLE];
-      const startDate = new Date(row[IDX_COL_START_DATE]);
-      const endDate = row[IDX_COL_END_DATE] ? new Date(row[IDX_COL_END_DATE]) : startDate;
-      const startTime = row[IDX_COL_START_TIME];
-      const endTime = row[IDX_COL_END_TIME];
-      const isAllDay = row[IDX_COL_ALL_DAY];
+      const startDate = rowObj.startDate;
+      const endDate = rowObj.endDate ? rowObj.endDate : startDate;
+      const startTime = rowObj.startTime;
+      const endTime = rowObj.endTime;
+      const isAllDay = rowObj.isAllDay;
 
       // 開始日と終了日の妥当性チェック
       if (endDate < startDate) {
@@ -55,16 +52,14 @@ function createCalendar() {
         continue;
       }
 
-      const originalDescription = row[IDX_COL_DESCRIPTION];
-      const description = createDescription(originalDescription);
-      const place = row[IDX_COL_PLACE];
-
-      const eventId = row[IDX_COL_EVENT_ID];
+      const description = createDescription(rowObj.description);
+      const place = rowObj.place;
+      const eventId = rowObj.eventId;
       let event = eventId ? calendar.getEventById(eventId) : null;
 
       let result = '';
 
-      if (action === '削除') {
+      if (rowObj.action === '削除') {
         if (event) {
           event.deleteEvent();
           result = '削除されました';
@@ -76,7 +71,7 @@ function createCalendar() {
         continue;
       }
 
-      if (action === '登録・更新') {
+      if (rowObj.action === '登録・更新') {
         let startDateTime, endDateTime;
         if (!isAllDay) {
           startDateTime = buildDateTime(startDate, startTime);
@@ -85,7 +80,7 @@ function createCalendar() {
 
         if (event) {
           // 予定を更新
-          event.setTitle(title);
+          event.setTitle(rowObj.title);
           event.setDescription(description);
           if (isAllDay) {
             // 終日イベントの更新 - 複数日対応
@@ -112,7 +107,7 @@ function createCalendar() {
             // 終日イベントの新規作成 - 複数日対応
             if (startDate.getTime() === endDate.getTime()) {
               // 単日の終日イベント
-              event = calendar.createAllDayEvent(title, startDate, {
+              event = calendar.createAllDayEvent(rowObj.title, startDate, {
                 description: description,
                 location: place
               });
@@ -120,7 +115,7 @@ function createCalendar() {
               // 複数日の終日イベント - 終了日の翌日を指定
               const adjustedEndDate = new Date(endDate);
               adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
-              event = calendar.createAllDayEvent(title, startDate, adjustedEndDate, {
+              event = calendar.createAllDayEvent(rowObj.title, startDate, adjustedEndDate, {
                 description: description,
                 location: place
               });
@@ -131,7 +126,7 @@ function createCalendar() {
             event.addPopupReminder(1440 - 540);
           } else {
             // 時刻指定イベントの新規作成
-            event = calendar.createEvent(title, startDateTime, endDateTime, {
+            event = calendar.createEvent(rowObj.title, startDateTime, endDateTime, {
               description: description,
               location: place
             });
@@ -165,6 +160,25 @@ function getCalendarByName(calendarName) {
   } else {
     return null;
   }
+}
+
+/**
+ * 行データを取得
+ */
+function parseRow(row) {
+  return {
+    action: row[IDX_COL_ACTION],
+    title: row[IDX_COL_TITLE],
+    startDate: new Date(row[IDX_COL_START_DATE]),
+    startTime: row[IDX_COL_START_TIME],
+    endDate: row[IDX_COL_END_DATE] ? new Date(row[IDX_COL_END_DATE]) : null,
+    endTime: row[IDX_COL_END_TIME],
+    isAllDay: row[IDX_COL_ALL_DAY],
+    calendarName: row[IDX_COL_CALENDAR_NAME],
+    place: row[IDX_COL_PLACE],
+    description: row[IDX_COL_DESCRIPTION],
+    eventId: row[IDX_COL_EVENT_ID],
+  };
 }
 
 /**
