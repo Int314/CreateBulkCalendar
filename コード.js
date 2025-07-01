@@ -1,22 +1,28 @@
-const RANGE_START_COL = 'A';     // データ範囲の開始列
-const RANGE_END_COL = 'L';       // データ範囲の終了列
-const START_ROW_NUM = 6;         // データ開始行番号
+const COL = {
+  ACTION: 0,        // 処理区分列
+  TITLE: 1,         // タイトル列
+  START_DATE: 2,    // 開始日列
+  START_TIME: 3,    // 開始時間列
+  END_DATE: 4,      // 終了日列
+  END_TIME: 5,      // 終了時間列
+  ALL_DAY: 6,       // 終日列
+  CALENDAR_NAME: 7, // カレンダー名列
+  PLACE: 8,         // 場所列
+  DESCRIPTION: 9,   // 説明列
+  RESULT: 10,       // 処理結果列
+  EVENT_ID: 11,     // イベントID列
+};
 
-const IDX_COL_ACTION = 0;        // 処理区分列
-const IDX_COL_TITLE = 1;         // タイトル列
-const IDX_COL_START_DATE = 2;    // 開始日列
-const IDX_COL_START_TIME = 3;    // 開始時間列
-const IDX_COL_END_DATE = 4;      // 終了日列
-const IDX_COL_END_TIME = 5;      // 終了時間列
-const IDX_COL_ALL_DAY = 6;       // 終日列
-const IDX_COL_CALENDAR_NAME = 7; // カレンダー名列
-const IDX_COL_PLACE = 8;         // 場所列
-const IDX_COL_DESCRIPTION = 9;   // 説明列
-const IDX_COL_RESULT = 10;       // 処理結果列
-const IDX_COL_EVENT_ID = 11;     // イベントID列
+const RANGE = {
+  START_COL: 'A',     // データ範囲の開始列
+  END_COL: 'L',       // データ範囲の終了列
+  START_ROW_NUM: 6,   // データ開始行番号
+};
 
-const DEFAULT_ACTION_NAME = '処理しない';   // 処理区分の初期値
-const DEFAULT_CALENDAR_NAME = 'デフォルト'; // カレンダー名の初期値
+const DEFAULT = {
+  ACTION_NAME: '処理しない',   // 処理区分の初期値
+  CALENDAR_NAME: 'デフォルト', // カレンダー名の初期値
+};
 
 /**
  * カレンダー作成
@@ -25,18 +31,18 @@ function createCalendar() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
 
   // データ取得
-  const dataRange = `${RANGE_START_COL}${START_ROW_NUM}:${RANGE_END_COL}`; // A1形式
+  const dataRange = `${RANGE.START_COL}${RANGE.START_ROW_NUM}:${RANGE.END_COL}`; // A1形式
   const data = sheet.getRange(dataRange).getValues();
 
   try {
     for (let i = 0; i < data.length; i++) {
       const rowObj = parseRow(data[i]);
 
-      if (!rowObj.action || rowObj.action === DEFAULT_ACTION_NAME) continue;
+      if (!rowObj.action || rowObj.action === DEFAULT.ACTION_NAME) continue;
 
       const calendar = getCalendarByName(rowObj.calendarName);
       if (!calendar) {
-        setResultAndReset(sheet, i + START_ROW_NUM, 'カレンダーが見つかりませんでした。');
+        setResultAndReset(sheet, i + RANGE.START_ROW_NUM, 'カレンダーが見つかりませんでした。');
         continue;
       }
 
@@ -48,7 +54,7 @@ function createCalendar() {
 
       // 開始日と終了日の妥当性チェック
       if (endDate < startDate) {
-        setResultAndReset(sheet, i + START_ROW_NUM, 'エラー: 終了日が開始日より前です');
+        setResultAndReset(sheet, i + RANGE.START_ROW_NUM, 'エラー: 終了日が開始日より前です');
         continue;
       }
 
@@ -67,7 +73,7 @@ function createCalendar() {
           result = '削除するイベントが見つかりませんでした';
         }
 
-        setResultAndReset(sheet, i + START_ROW_NUM, result, true);
+        setResultAndReset(sheet, i + RANGE.START_ROW_NUM, result, true);
         continue;
       }
 
@@ -132,10 +138,10 @@ function createCalendar() {
             });
           }
           // イベントIDを保存
-          sheet.getRange(i + START_ROW_NUM, IDX_COL_EVENT_ID + 1).setValue(event.getId());
+          sheet.getRange(i + RANGE.START_ROW_NUM, COL.EVENT_ID + 1).setValue(event.getId());
           result = '新規作成されました';
         }
-        setResultAndReset(sheet, i + START_ROW_NUM, result);
+        setResultAndReset(sheet, i + RANGE.START_ROW_NUM, result);
         continue;
       }
     }
@@ -150,7 +156,7 @@ function createCalendar() {
  * カレンダー取得
  */
 function getCalendarByName(calendarName) {
-  if (!calendarName || calendarName === DEFAULT_CALENDAR_NAME) {
+  if (!calendarName || calendarName === DEFAULT.CALENDAR_NAME) {
     return CalendarApp.getDefaultCalendar();
   }
 
@@ -167,17 +173,17 @@ function getCalendarByName(calendarName) {
  */
 function parseRow(row) {
   return {
-    action: row[IDX_COL_ACTION],
-    title: row[IDX_COL_TITLE],
-    startDate: new Date(row[IDX_COL_START_DATE]),
-    startTime: row[IDX_COL_START_TIME],
-    endDate: row[IDX_COL_END_DATE] ? new Date(row[IDX_COL_END_DATE]) : null,
-    endTime: row[IDX_COL_END_TIME],
-    isAllDay: row[IDX_COL_ALL_DAY],
-    calendarName: row[IDX_COL_CALENDAR_NAME],
-    place: row[IDX_COL_PLACE],
-    description: row[IDX_COL_DESCRIPTION],
-    eventId: row[IDX_COL_EVENT_ID],
+    action: row[COL.ACTION],
+    title: row[COL.TITLE],
+    startDate: new Date(row[COL.START_DATE]),
+    startTime: row[COL.START_TIME],
+    endDate: row[COL.END_DATE] ? new Date(row[COL.END_DATE]) : null,
+    endTime: row[COL.END_TIME],
+    isAllDay: row[COL.ALL_DAY],
+    calendarName: row[COL.CALENDAR_NAME],
+    place: row[COL.PLACE],
+    description: row[COL.DESCRIPTION],
+    eventId: row[COL.EVENT_ID],
   };
 }
 
@@ -199,25 +205,25 @@ function createDescription(originalDescription) {
 function resetData() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   const lastRow = sheet.getLastRow();
-  const dataRange = `${RANGE_START_COL}${START_ROW_NUM}:${RANGE_END_COL}${lastRow}`;
+  const dataRange = `${RANGE.START_COL}${RANGE.START_ROW_NUM}:${RANGE.END_COL}${lastRow}`;
 
   try {
     // データ範囲のセルをクリア
     sheet.getRange(dataRange).clearContent();
 
     // 各行のプルダウンを初期化
-    for (let i = START_ROW_NUM; i <= lastRow; i++) {
+    for (let i = RANGE.START_ROW_NUM; i <= lastRow; i++) {
       // 処理区分
-      let cell = sheet.getRange(i, IDX_COL_ACTION + 1);
-      cell.setValue(DEFAULT_ACTION_NAME);
+      let cell = sheet.getRange(i, COL.ACTION + 1);
+      cell.setValue(DEFAULT.ACTION_NAME);
 
       // カレンダー名
-      cell = sheet.getRange(i, IDX_COL_CALENDAR_NAME + 1);
-      cell.setValue(DEFAULT_CALENDAR_NAME);
+      cell = sheet.getRange(i, COL.CALENDAR_NAME + 1);
+      cell.setValue(DEFAULT.CALENDAR_NAME);
     }
 
     // 終日の列にチェックボックスを設置
-    const allDayRange = sheet.getRange(START_ROW_NUM, IDX_COL_ALL_DAY + 1, lastRow - START_ROW_NUM + 1);
+    const allDayRange = sheet.getRange(RANGE.START_ROW_NUM, COL.ALL_DAY + 1, lastRow - RANGE.START_ROW_NUM + 1);
     allDayRange.insertCheckboxes();
 
     SpreadsheetApp.getUi().alert('データが初期化されました。');
@@ -231,10 +237,10 @@ function resetData() {
  * 結果・状態の書き込みと初期化
  */
 function setResultAndReset(sheet, rowIdx, result, clearEventId = false) {
-  sheet.getRange(rowIdx, IDX_COL_RESULT + 1).setValue(result);
-  sheet.getRange(rowIdx, IDX_COL_ACTION + 1).setValue(DEFAULT_ACTION_NAME);
+  sheet.getRange(rowIdx, COL.RESULT + 1).setValue(result);
+  sheet.getRange(rowIdx, COL.ACTION + 1).setValue(DEFAULT.ACTION_NAME);
   if (clearEventId) {
-    sheet.getRange(rowIdx, IDX_COL_EVENT_ID + 1).clear();
+    sheet.getRange(rowIdx, COL.EVENT_ID + 1).clear();
   }
 }
 
